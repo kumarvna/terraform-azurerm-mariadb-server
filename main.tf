@@ -2,10 +2,9 @@
 # Local configuration - Default (required). 
 #------------------------------------------------------------
 locals {
-  resource_group_name                = element(coalescelist(data.azurerm_resource_group.rgrp.*.name, azurerm_resource_group.rg.*.name, [""]), 0)
-  location                           = element(coalescelist(data.azurerm_resource_group.rgrp.*.location, azurerm_resource_group.rg.*.location, [""]), 0)
-  if_threat_detection_policy_enabled = var.enable_threat_detection_policy ? [{}] : []
-  mysqlserver_settings = defaults(var.mysqlserver_settings, {
+  resource_group_name = element(coalescelist(data.azurerm_resource_group.rgrp.*.name, azurerm_resource_group.rg.*.name, [""]), 0)
+  location            = element(coalescelist(data.azurerm_resource_group.rgrp.*.location, azurerm_resource_group.rg.*.location, [""]), 0)
+  mysqlserver_settings = defaults(var.mariadb_settings, {
     charset   = "utf8"
     collation = "utf8_general_ci"
   })
@@ -26,8 +25,6 @@ resource "azurerm_resource_group" "rg" {
   tags     = merge({ "Name" = format("%s", var.resource_group_name) }, var.tags, )
 }
 
-data "azurerm_client_config" "current" {}
-
 data "azurerm_log_analytics_workspace" "logws" {
   count               = var.log_analytics_workspace_name != null ? 1 : 0
   name                = var.log_analytics_workspace_name
@@ -37,9 +34,8 @@ data "azurerm_log_analytics_workspace" "logws" {
 #---------------------------------------------------------
 # Storage Account to keep Audit logs - Default is "false"
 #----------------------------------------------------------
-
 resource "random_string" "str" {
-  count   = var.enable_threat_detection_policy ? 1 : 0
+  count   = var.log_analytics_workspace_name != null ? 1 : 0
   length  = 6
   special = false
   upper   = false
@@ -49,7 +45,7 @@ resource "random_string" "str" {
 }
 
 resource "azurerm_storage_account" "storeacc" {
-  count                     = var.enable_threat_detection_policy ? 1 : 0
+  count                     = var.log_analytics_workspace_name != null ? 1 : 0
   name                      = var.storage_account_name == null ? "stsqlauditlogs${element(concat(random_string.str.*.result, [""]), 0)}" : substr(var.storage_account_name, 0, 24)
   resource_group_name       = local.resource_group_name
   location                  = local.location
@@ -70,7 +66,7 @@ resource "random_password" "main" {
   special     = false
 
   keepers = {
-    administrator_login_password = var.mysqlserver_name
+    administrator_login_password = var.mariadb_server_name
   }
 }
 
@@ -108,3 +104,70 @@ resource "azurerm_mariadb_database" "main" {
   collation           = var.mariadb_settings.collation
 }
 
+#------------------------------------------------------------
+# Adding  MariaDB Server Parameters - Default is "false"
+#------------------------------------------------------------
+resource "azurerm_mariadb_configuration" "main" {
+  for_each            = var.mariadb_configuration != null ? { for k, v in var.mariadb_configuration : k => v if v != null } : {}
+  name                = each.key
+  resource_group_name = local.resource_group_name
+  server_name         = azurerm_mariadb_server.main.name
+  value               = each.value
+}
+
+#------------------------------------------------------------
+# Adding Firewall rules for MariaDB Server - Default is "false"
+#------------------------------------------------------------
+resource "azurerm_mariadb_firewall_rule" "main" {
+  for_each            = var.firewall_rules != null ? { for k, v in var.firewall_rules : k => v if v != null } : {}
+  name                = format("%s", each.key)
+  resource_group_name = local.resource_group_name
+  server_name         = azurerm_mariadb_server.main.name
+  start_ip_address    = each.value["start_ip_address"]
+  end_ip_address      = each.value["end_ip_address"]
+}
+
+#------------------------------------------------------------------------------------
+# Allowing traffic between an Azure MariaDB server and a subnet - Default is "false"
+#------------------------------------------------------------------------------------
+resource "azurerm_mariadb_virtual_network_rule" "main" {
+  count               = var.subnet_id != null ? 1 : 0
+  name                = format("%s-vnet-rule", var.mariadb_server_name)
+  resource_group_name = local.resource_group_name
+  server_name         = azurerm_mariadb_server.main.name
+  subnet_id           = var.subnet_id
+}
+
+#------------------------------------------------------------------
+# azurerm monitoring diagnostics  - Default is "false" 
+#------------------------------------------------------------------
+resource "azurerm_monitor_diagnostic_setting" "extaudit" {
+  count                      = var.log_analytics_workspace_name != null ? 1 : 0
+  name                       = lower("extaudit-${var.mariadb_server_name}-diag")
+  target_resource_id         = azurerm_mariadb_server.main.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.logws.0.id
+  storage_account_id         = var.storage_account_id != null ? storageazurerm_storage_account.storeacc.0.id : null
+
+  dynamic "log" {
+    for_each = var.extaudit_diag_logs
+    content {
+      category = log.value
+      enabled  = true
+      retention_policy {
+        enabled = false
+      }
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+
+    retention_policy {
+      enabled = false
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [log, metric]
+  }
+}
