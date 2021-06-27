@@ -126,7 +126,7 @@ This object helps you setup desired MariaDB server and support following argumen
 
 The MariaDB engine provides many different server variables/parameters that can be used to configure and tune engine behavior. Some parameters can be set dynamically during runtime while others are "static", requiring a server restart in order to apply.
 
-The list of supported server parameters is constantly growing. Use the server parameters tab in the Azure portal to view the full list and configure server parameters values. A few Supported parameters are here for your reference.
+The list of supported server parameters is constantly growing. Use the server parameters tab in the Azure portal to view the full list and configure server parameters values. Specifies the name of the MariaDB Configuration, [which needs to be a valid MariaDB configuration name](https://mariadb.com/kb/en/server-system-variables/). A few Supported parameters are here for your reference. 
 
 | Parameter name | Description | Parameter Type |Default Value
 |--|--|--|--|
