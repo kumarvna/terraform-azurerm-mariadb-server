@@ -84,7 +84,7 @@ variable "subnet_id" {
 }
 
 variable "enable_logs_to_storage_account" {
-  description = "create a storage account where logs should be sent"
+  description = "Create a storage account where logs should be sent"
   default     = false
 }
 

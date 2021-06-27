@@ -1,6 +1,7 @@
 module "mariadb" {
-  source  = "kumarvna/mariadb/azurerm"
-  version = "1.0.0"
+  //source  = "kumarvna/mariadb/azurerm"
+  //version = "1.0.0"
+  source = "../../"
 
   # By default, this module will create a resource group
   # proivde a name to use an existing resource group and set the argument 
