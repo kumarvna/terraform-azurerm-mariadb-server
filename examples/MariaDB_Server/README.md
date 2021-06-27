@@ -5,7 +5,7 @@ Azure Database for MariaDB is a relational database service based on the open-so
 ## Module Usage
 
 ```terraform
-module "mariadb" {
+module "mariadb-server" {
   source  = "kumarvna/mariadb-server/azurerm"
   version = "1.0.0"
 

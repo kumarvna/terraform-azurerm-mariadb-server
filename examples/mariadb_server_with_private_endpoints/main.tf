@@ -1,4 +1,4 @@
-module "mariadb" {
+module "mariadb-server" {
   source  = "kumarvna/mariadb-server/azurerm"
   version = "1.0.0"
 
