@@ -17,7 +17,7 @@ Azure Database for MariaDB is a relational database service based on the open-so
 
 ```hcl
 module "mariadb" {
-  source  = "kumarvna/mariadb/azurerm"
+  source  = "kumarvna/mariadb-server/azurerm"
   version = "1.0.0"
 
   # By default, this module will create a resource group
@@ -61,7 +61,8 @@ module "mariadb" {
   subnet_id = var.subnet_id
 
   # (Optional) To enable Azure Monitoring for Azure MariaDB database
-  # (Optional) Specify `enable_logs_to_storage_account` to save monitoring logs to storage. 
+  # (Optional) Specify `enable_logs_to_storage_account` to save monitoring logs to storage.
+  # Create required storage account by specifying optional `storage_account_name` variable. 
   log_analytics_workspace_name   = "loganalytics-we-sharedtest2"
   enable_logs_to_storage_account = true
   storage_account_name           = "mariadblogdignostics"

@@ -1,7 +1,6 @@
 module "mariadb" {
-  //source  = "kumarvna/mariadb/azurerm"
-  //version = "1.0.0"
-  source = "../../"
+  source  = "kumarvna/mariadb-server/azurerm"
+  version = "1.0.0"
 
   # By default, this module will create a resource group
   # proivde a name to use an existing resource group and set the argument 
@@ -41,10 +40,11 @@ module "mariadb" {
   }
 
   # Use Virtual Network service endpoints and rules for Azure Database for MariaDB
-  subnet_id = "/subscriptions/1e3f0eeb-2235-44cd-b3a3-dcded0861d06/resourceGroups/rg-shared-westeurope-01/providers/Microsoft.Network/virtualNetworks/vnet-shared-hub-westeurope-001/subnets/snet-appgateway" #var.subnet_id
+  subnet_id = var.subnet_id
 
   # (Optional) To enable Azure Monitoring for Azure MariaDB database
-  # (Optional) Specify `enable_logs_to_storage_account` to save monitoring logs to storage. 
+  # (Optional) Specify `enable_logs_to_storage_account` to save monitoring logs to storage.
+  # Create required storage account by specifying optional `storage_account_name` variable. 
   log_analytics_workspace_name   = "loganalytics-we-sharedtest2"
   enable_logs_to_storage_account = true
   storage_account_name           = "mariadblogdignostics"
@@ -55,7 +55,7 @@ module "mariadb" {
   enable_private_endpoint       = true
   virtual_network_name          = "vnet-shared-hub-westeurope-001"
   private_subnet_address_prefix = ["10.1.5.0/29"]
-  existing_private_dns_zone     = "roshinidemozone.com" #"demo.example.com"
+  existing_private_dns_zone     = "demo.example.com"
 
   # Firewall Rules to allow azure and external clients and specific Ip address/ranges. 
   firewall_rules = {
