@@ -1,3 +1,10 @@
+# Azure Database for MariaDB Terraform Module
+
+Azure Database for MariaDB is a relational database service based on the open-source MariaDB Server engine. It's a fully managed database as a service offering that can handle mission-critical workloads with predictable performance and dynamic scalability.
+
+## Module Usage
+
+```terraform
 module "mariadb" {
   source  = "kumarvna/mariadb/azurerm"
   version = "1.0.0"
@@ -67,3 +74,18 @@ module "mariadb" {
     Owner       = "test-user"
   }
 }
+```
+
+## Terraform Usage
+
+To run this example you need to execute following Terraform commands
+
+```hcl
+terraform init
+
+terraform plan
+
+terraform apply
+```
+
+Run `terraform destroy` when you don't need these resources.
